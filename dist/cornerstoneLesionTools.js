@@ -144,7 +144,6 @@ function getConfiguration() {
 }
 
 function setConfiguration(config) {
-  console.log("c", config);
   configuration = config;
 }
 
@@ -342,12 +341,15 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var _external$cornerstone = _externalModules2.default.cornerstoneTools,
     displayTool = _external$cornerstone.displayTool,
+    addToolState = _external$cornerstone.addToolState,
     getToolState = _external$cornerstone.getToolState;
+
+
+var toolType = 'lesionDisplay';
 
 /**
  * Draw regions on image
  */
-
 function onImageRendered(_ref) {
   var detail = _ref.detail;
 
@@ -362,13 +364,26 @@ function onImageRendered(_ref) {
 
   var stackToolData = getToolState(element, 'stack');
   var regionsToolData = getToolState(element, 'regions');
+  var displayToolData = getToolState(element, toolType);
 
   // Ensure tool is enabled
   if (!regionsToolData || !regionsToolData.data || !regionsToolData.data.length) {
     return;
   }
 
-  if (!regionsToolData.data[0].drawBuffer || width !== regionsToolData.data[0].drawBuffer.canvas.width) {
+  var displayData = void 0;
+
+  if (!displayToolData || !displayToolData.data || !displayToolData.data.length) {
+    displayData = {
+      canvas: null,
+      imageData: null
+    };
+    addToolState(element, toolType, displayData);
+  } else {
+    displayData = displayToolData.data[0];
+  }
+
+  if (!displayData.canvas || width !== displayToolData.canvas.width) {
     var canvas = document.createElement('canvas');
     var context = canvas.getContext('2d');
     var _imageData = context.createImageData(width, height);
@@ -376,7 +391,7 @@ function onImageRendered(_ref) {
     canvas.width = width;
     canvas.height = height;
 
-    regionsToolData.data[0].drawBuffer = {
+    displayData = {
       canvas: canvas,
       imageData: _imageData
     };
@@ -384,13 +399,11 @@ function onImageRendered(_ref) {
 
   // Extract tool data
   var currentImageIdIndex = stackToolData.data[0].currentImageIdIndex;
-  var _regionsToolData$data = regionsToolData.data[0],
-      drawBuffer = _regionsToolData$data.drawBuffer,
-      buffer = _regionsToolData$data.buffer;
+  var buffer = regionsToolData.data[0].buffer;
 
 
-  var doubleBuffer = drawBuffer.canvas;
-  var imageData = drawBuffer.imageData;
+  var doubleBuffer = displayData.canvas;
+  var imageData = displayData.imageData;
 
   var pixels = imageData.data;
   var sliceSize = width * height;
@@ -739,7 +752,7 @@ var _external$cornerstone = _externalModules2.default.cornerstoneTools,
     isMouseButtonEnabled = _external$cornerstone.isMouseButtonEnabled;
 
 
-var toolType = 'draw';
+var toolType = 'lesionDraw';
 
 function updateRegions(element) {
   var _getConfiguration = (0, _configuration.getConfiguration)(),
@@ -1160,19 +1173,22 @@ function score(element) {
 
   return Promise.all(imageIds.map(function (imageId, imageIndex) {
     return _externalModules2.default.cornerstone.loadImage(imageId).then(function (image) {
-      var dataSet = image.data;
 
-      metaData.sliceThickness = dataSet.floatString('x00180050');
-      metaData.pixelSpacing = dataSet.string('x00280030').split('\\').map(parseFloat);
-      metaData.KVP = dataSet.floatString('x00180060');
-      metaData.rescaleSlope = dataSet.floatString('x00281053');
-      metaData.rescaleIntercept = dataSet.floatString('x00281052');
-      metaData.rescaleType = dataSet.string('x00281054');
+      var imagePlane = _externalModules2.default.cornerstone.metaData.get('imagePlaneModule', imageId);
+      var modalityLut = _externalModules2.default.cornerstone.metaData.get('modalityLutModule', imageId);
 
-      var imagePositionPatient = dataSet.string('x00200032').split('\\').map(parseFloat);
-      var imageOrientationTmp = dataSet.string('x00200037').split('\\').map(parseFloat);
+      metaData.sliceThickness = imagePlane.sliceThickness;
+      metaData.pixelSpacing = imagePlane.pixelSpacing;
+      metaData.rescaleSlope = modalityLut.rescaleSlope;
+      metaData.rescaleIntercept = modalityLut.rescaleIntercept;
+      metaData.rescaleType = modalityLut.rescaleType;
+
+      var imagePositionPatient = imagePlane.imagePositionPatient;
+      var imageOrientationTmp = imagePlane.imageOrientationPatient;
       var imageOrientation = [imageOrientationTmp.slice(0, 3), imageOrientationTmp.slice(3)];
 
+      var dataSet = image.data;
+      metaData.KVP = dataSet.floatString('x00180060');
       /* What is this?
        if (metaData.rescaleType !== 'HU') {
          console.warn(`Modality LUT does not convert to Hounsfield units but to ${metaData.rescaleType}. Agatston score is not defined for this unit type.`);

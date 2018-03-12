@@ -6,7 +6,7 @@ import { createUndoStep } from './history.js';
 
 const { toolColors, getToolState, getToolOptions, setToolOptions, simpleMouseButtonTool, isMouseButtonEnabled } = external.cornerstoneTools;
 
-const toolType = 'draw';
+const toolType = 'lesionDraw';
 
 function updateRegions (element) {
   const { snap, toolRegionValue, layersAbove, layersBelow } = getConfiguration();

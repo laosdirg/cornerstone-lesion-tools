@@ -192,22 +192,25 @@ export function score (element) {
 
   return Promise.all(imageIds.map((imageId, imageIndex) =>
     external.cornerstone.loadImage(imageId).then((image) => {
-      const dataSet = image.data;
 
-      metaData.sliceThickness = dataSet.floatString('x00180050');
-      metaData.pixelSpacing = dataSet.string('x00280030').split('\\').map(parseFloat);
-      metaData.KVP = dataSet.floatString('x00180060');
-      metaData.rescaleSlope = dataSet.floatString('x00281053');
-      metaData.rescaleIntercept = dataSet.floatString('x00281052');
-      metaData.rescaleType = dataSet.string('x00281054');
+      const imagePlane = external.cornerstone.metaData.get('imagePlaneModule', imageId);
+      const modalityLut = external.cornerstone.metaData.get('modalityLutModule', imageId);
 
-      const imagePositionPatient = dataSet.string('x00200032').split('\\').map(parseFloat);
-      const imageOrientationTmp = dataSet.string('x00200037').split('\\').map(parseFloat);
+      metaData.sliceThickness = imagePlane.sliceThickness;
+      metaData.pixelSpacing = imagePlane.pixelSpacing;
+      metaData.rescaleSlope = modalityLut.rescaleSlope;
+      metaData.rescaleIntercept = modalityLut.rescaleIntercept;
+      metaData.rescaleType = modalityLut.rescaleType;
+
+      const imagePositionPatient = imagePlane.imagePositionPatient;
+      const imageOrientationTmp = imagePlane.imageOrientationPatient;
       const imageOrientation = [
         imageOrientationTmp.slice(0, 3),
         imageOrientationTmp.slice(3)
       ];
 
+      const dataSet = image.data;
+      metaData.KVP = dataSet.floatString('x00180060');
       /* What is this?
        if (metaData.rescaleType !== 'HU') {
          console.warn(`Modality LUT does not convert to Hounsfield units but to ${metaData.rescaleType}. Agatston score is not defined for this unit type.`);

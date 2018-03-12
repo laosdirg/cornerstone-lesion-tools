@@ -2,24 +2,24 @@
 <html>
 <head>
     <!-- support for mobile touch devices -->
-    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1, minimal-ui">
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
 
     <!-- twitter bootstrap CSS stylesheet - not required by cornerstoneTools -->
-    <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="./bootstrap.min.css" rel="stylesheet">
 
-    <link href="../cornerstone.min.css" rel="stylesheet">
+    <link href="./cornerstone.min.css" rel="stylesheet">
 
 </head>
 <body>
 <div class="container">
     <div class="page-header">
         <h1>
-            Region Tools Example
+            Lesion Tools Example
         </h1>
         <p>
-            This page contains an example of the region tools.
+            This page contains an example of the lesion tools.
         </p>
-        <a href="../index.html">Go back to the Examples page</a>
     </div>
 
     <div class="row">
@@ -38,60 +38,68 @@
                 </div>
             </div>
         </div>
-        <!--<div class="col-md-6">
-            <div style="width:512px;height:512px;position:relative;display:inline-block;color:white;"
-                 oncontextmenu="return false"
-                 class='cornerstone-enabled-image'
-                 unselectable='on'
-                 onselectstart='return false;'
-                 onmousedown='return false;'>
-                <div id="dicomImage2"
-                     style="width:512px;height:512px;top:0px;left:0px; position:absolute;">
-                </div>
-                <div id="mrtopleft" style="position: absolute;top:3px; left:3px">
-                    Coronal
-                </div>
-            </div>
-        </div>//-->
-
-
     </div>
+
+<button id="threshold">threshold</button>
+<button id="score">score</button>
+<button id="undo">undo</button>
+<button id="redo">redo</button>
+
+  <div class="row">
+      <fieldset class="col-sm-6">
+        <legend>configuration</legend>
+        <ol>
+          <li>
+            <label for="thresholdVal">calciumThresholdHu:</label>
+            <input type="text" id="thresholdVal" value="130">
+          </li>
+          <li>
+            <label for="snap">snap to regions: <input id="snap" type="checkbox" name="snap"></label>
+          </li>
+          <li>
+            <label for="drawLayersAbove">layers above:</label>
+            <input type="text" id="layersAbove" value="1">
+          </li>
+          <li>
+            <label for="drawLayersBelow">layers below:</label>
+            <input type="text" id="layersBelow" value="1">
+          </li>
+          <li>
+            <label for="drawValue">tool value:</label>
+            <input type="text" id="value" value="1">
+          </li>
+        </ol>
+      </fieldset>
+
+  </div>
+
+  <div>
+    <input type="file" multiple id="selectFile" >
+ </div>
+<button id="examples">or use example pictures</button>
+
+
+</body>
 
 <!-- include the cornerstone library -->
 <script src="../node_modules/cornerstone-core/dist/cornerstone.min.js"></script>
 <script src="../node_modules/cornerstone-math/dist/cornerstoneMath.min.js"></script>
 <script src="../node_modules/cornerstone-tools/dist/cornerstoneTools.min.js"></script>
 
-<!-- include the cornerstone tools library -->
+<!-- include the cornerstone lesion tools library -->
 <script src="../dist/cornerstoneLesionTools.js"></script>
 
 <!-- include special code for these examples which provides images -->
 <script src="./exampleImageLoader.js"></script>
+<script src="./exampleMetaDataProvider.js"></script>
 
-
-    <!-- include the cornerstoneWADOImageLoader library -->
-    <script src="./dicomParser.js"></script>
-    <script src="./cornerstoneWADOImageLoader.js"></script>
-
-
-<button id="calculate">scores</button>
-<button id="undo">undo</button>
-<button id="redo">redo</button>
-
-  <div>
-    <label for="thresholdVal">Thresholding value:</label>
-    <input type="text" id="thresholdVal" value="130">
-  </div>
-  <div>
-    <input type="file" multiple id="selectFile" >
- </div>
- <button id="examples">or use example pictures</button>
- <label for="snap"><input id="snap" type="checkbox" name="snap">snap</label>
+<!-- include the cornerstoneWADOImageLoader library -->
+<script src="../node_modules/dicom-parser/dist/dicomParser.js"></script>
+<script src="../node_modules/cornerstone-wado-image-loader/dist/cornerstoneWADOImageLoader.min.js"></script>
 
 <script>
     var element1 = document.getElementById('dicomImage1');
     var element2 = document.getElementById('dicomImage2');
-
 
     // Enable the dicomImage element1 and the mouse inputs
     cornerstone.enable(element1);
@@ -101,10 +109,10 @@
     cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
 
     var config = {
-         webWorkerPath : './cornerstoneWADOImageLoaderWebWorker.js',
+         webWorkerPath : '/node_modules/cornerstone-wado-image-loader/dist/cornerstoneWADOImageLoaderWebWorker.min.js',
          taskConfiguration: {
              'decodeTask' : {
-                 codecsPath: './cornerstoneWADOImageLoaderCodecs.js'
+                 codecsPath: '/node_modules/cornerstone-wado-image-loader/dist/cornerstoneWADOImageLoaderCodecs.min.js'
              }
          }
      };
@@ -115,9 +123,9 @@
             currentImageIdIndex : 0,
             imageIds: imageIds
         };
-        console.log("LOAD AND VIEW", imageIds)
-        cornerstone.loadImage(imageIds[0]).then(function(image) {
-          console.log(image);
+
+        cornerstone.loadImage(imageIds[0]).then((image) => {
+
             // Display the image
             cornerstone.displayImage(element1, image);
 
@@ -132,53 +140,79 @@
             cornerstoneTools.stackScrollWheel.activate(element1);
 
             cornerstoneTools.scrollIndicator.enable(element1);
-        });
+
+            cornerstoneLesionTools.threshold(element1);
+        }, (e) => console.error(e));
     }
-    document.getElementById('examples').addEventListener('click', function(){
-      loadAndViewImages([
-          'example://1',
-          'example://2',
-          'example://3'
-      ])
-    })
 
-    document.getElementById('calculate').addEventListener('click', function(){
-      var scores = cornerstoneLesionTools.score(element1).then(function(scores){
-        console.log("YO", scores);
-      });
-    })
+    //--------------------------------------------------------------------------
+ // Handlers for loading new images
+ //--------------------------------------------------------------------------
+ document.getElementById('examples').addEventListener('click', function(){
+   loadAndViewImages([
+       'example://1',
+       'example://2',
+       'example://3'
+   ])
+ });
+ document.getElementById('selectFile').addEventListener('change', function(e){
+   var files = Array.from(e.target.files);
+   var imageIds = files.map(file => {
+     console.log(file);
+     return cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+   })
+   loadAndViewImages(imageIds);
+ });
+ //--------------------------------------------------------------------------
+ // Handlers for activating tools
+ //--------------------------------------------------------------------------
+ document.getElementById('score').addEventListener('click', function(){
+   var scores = cornerstoneLesionTools.score(element1).then(function(scores){
+     console.log("YO", scores);
+   });
+ })
+ document.getElementById('threshold').addEventListener('click', function(){
+    cornerstoneLesionTools.threshold(element1);
+ })
+ document.getElementById('undo').addEventListener('click', function(){
+   cornerstoneLesionTools.undo(element1);
+ });
+ document.getElementById('redo').addEventListener('click', function(){
+   cornerstoneLesionTools.redo(element1);
+ });
+ //--------------------------------------------------------------------------
+ // Handlers for configuration
+ //--------------------------------------------------------------------------
+ // configure tools
+ const lesionConfig = cornerstoneLesionTools.getConfiguration();
+ cornerstoneLesionTools.setConfiguration({
+   ...lesionConfig,
+   calciumThresholdHu: 130,
+ });
+ document.getElementById('snap').checked = lesionConfig.snap;
 
-    document.getElementById('undo').addEventListener('click', function(){
-      cornerstoneLesionTools.undo(element1);
-    });
+ function syncConfig(elementId, prop) {
+   const element = document.getElementById(elementId);
+   var config = cornerstoneLesionTools.getConfiguration();
+   element.addEventListener('input', function(event) {
+     config[prop] = parseInt(event.target.value);
+     cornerstoneLesionTools.setConfiguration(config)
+   })
+   element.value = config[prop];
+ }
+ syncConfig('thresholdVal', 'calciumThresholdHu');
+ syncConfig('layersAbove', 'layersAbove');
+ syncConfig('layersBelow', 'layersBelow');
+ syncConfig('value', 'toolRegionValue');
 
-    document.getElementById('redo').addEventListener('click', function(){
-      cornerstoneLesionTools.redo(element1);
-    });
+ document.getElementById('snap').addEventListener('change', function(e) {
+   e.preventDefault();
+   var config = cornerstoneLesionTools.getConfiguration();
+   config.snap = e.target.checked;
+   cornerstoneLesionTools.setConfiguration(config);
+ })
 
-    document.getElementById('selectFile').addEventListener('change', function(e){
-
-      var files = Array.from(e.target.files);
-      var imageIds = files.map(cornerstoneWADOImageLoader.wadouri.fileManager.add)
-
-      loadAndViewImages(imageIds);
-    })
-
-    document.getElementById('thresholdVal').addEventListener('blur', function(event) {
-      var config = cornerstoneLesionTools.getConfiguration();
-      config.calciumThresholdHu = parseInt(event.target.value);
-      cornerstoneLesionTools.setConfiguration(config)
-      cornerstoneLesionTools.threshold(element1);
-    })
-
-    document.getElementById('snap').addEventListener('change', function(e) {
-      e.preventDefault();
-      var config = cornerstoneLesionTools.getConfiguration();
-      config.snap = e.target.checked;
-      cornerstoneLesionTools.setConfiguration(config);
-    })
 
 
 </script>
-    </body>
 </html>

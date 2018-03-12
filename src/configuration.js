@@ -36,6 +36,5 @@ export function getConfiguration () {
 }
 
 export function setConfiguration (config) {
-  console.log("c", config);
   configuration = config;
 }

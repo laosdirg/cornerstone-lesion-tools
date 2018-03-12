@@ -8,6 +8,7 @@
   "license": "MIT",
   "module": "src/index.js",
   "scripts": {
+    "serve": "serve",
     "eslint": "eslint -c .eslintrc.js src",
     "eslint-quiet": "eslint -c .eslintrc.js --quiet src",
     "eslint-fix": "eslint -c .eslintrc.js --fix src",
@@ -61,6 +62,7 @@
     "opn-cli": "^3.1.0",
     "phantomjs-prebuilt": "^2.1.16",
     "promise-polyfill": "^7.1.0",
+    "serve": "^6.5.3",
     "shx": "^0.2.2",
     "webpack": "^3.11.0"
   },

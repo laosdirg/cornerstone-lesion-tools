@@ -2,7 +2,9 @@ import external from '../externalModules.js';
 import { TYPED_ARRAY } from '../constants.js';
 import { getConfiguration } from '../configuration.js';
 
-const { displayTool, getToolState } = external.cornerstoneTools;
+const { displayTool, addToolState, getToolState } = external.cornerstoneTools;
+
+const toolType = 'lesionDisplay';
 
 /**
  * Draw regions on image
@@ -14,13 +16,26 @@ function onImageRendered ({ detail }) {
 
   const stackToolData = getToolState(element, 'stack');
   const regionsToolData = getToolState(element, 'regions');
+  const displayToolData = getToolState(element, toolType);
 
   // Ensure tool is enabled
   if (!regionsToolData || !regionsToolData.data || !regionsToolData.data.length) {
     return;
   }
 
-  if (!regionsToolData.data[0].drawBuffer || width !== regionsToolData.data[0].drawBuffer.canvas.width) {
+  let displayData;
+
+  if (!displayToolData || !displayToolData.data || !displayToolData.data.length) {
+    displayData = {
+      canvas: null,
+      imageData: null
+    };
+    addToolState(element, toolType, displayData);
+  } else {
+    displayData = displayToolData.data[0];
+  }
+
+  if (!displayData.canvas || width !== displayToolData.canvas.width) {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     const imageData = context.createImageData(width, height);
@@ -28,7 +43,7 @@ function onImageRendered ({ detail }) {
     canvas.width = width;
     canvas.height = height;
 
-    regionsToolData.data[0].drawBuffer = {
+    displayData = {
       canvas,
       imageData
     };
@@ -36,10 +51,10 @@ function onImageRendered ({ detail }) {
 
   // Extract tool data
   const { currentImageIdIndex } = stackToolData.data[0];
-  const { drawBuffer, buffer } = regionsToolData.data[0];
+  const { buffer } = regionsToolData.data[0];
 
-  const doubleBuffer = drawBuffer.canvas;
-  const imageData = drawBuffer.imageData;
+  const doubleBuffer = displayData.canvas;
+  const imageData = displayData.imageData;
 
   const pixels = imageData.data;
   const sliceSize = width * height;
