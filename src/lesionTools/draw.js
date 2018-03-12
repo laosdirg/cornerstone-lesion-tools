@@ -27,7 +27,6 @@ function updateRegions (element) {
   const slice = stackData.data[0].currentImageIdIndex;
   const numSlices = stackData.data[0].imageIds.length;
   const regions = thresholdingData.data[0];
-  const points = options.points.map(({ x, y }) => ([x, y]));
 
   // Extract region data
   const buffer = regions.buffer;
@@ -58,7 +57,7 @@ function updateRegions (element) {
         } else {
           snapBool = true;
         }
-        if (snapBool && pointInsidePolygon([x, y], points)) {
+        if (snapBool && pointInsidePolygon({ x, y }, options.points)) {
           view[index] = toolRegionValue;
         }
       }

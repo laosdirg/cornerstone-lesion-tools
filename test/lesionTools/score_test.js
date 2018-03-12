@@ -1,11 +1,15 @@
 import { expect } from 'chai';
-import { webWorkerManager } from 'cornerstone-wado-image-loader';
-import { computeScore, computeVoxelSize, computeIOPProjectedDistance, computeOverlapFactor} from '../../src/regions/score.js';
+import { webWorkerManager, wadouri, external } from 'cornerstone-wado-image-loader';
+import { computeScore, computeVoxelSize, computeIOPProjectedDistance, computeOverlapFactor } from '../../src/lesionTools/score.js';
 
 describe('config', function () {
-  it('should initialize', function () {
+  this.timeout(0);
+
+  before(function () {
+    external.cornerstone = window.cornerstone;
+
     // Initialize the web worker manager
-    let config = {
+    const config = {
       maxWebWorkers: 1,
       startWebWorkersOnDemand: true,
       webWorkerPath: '/base/node_modules/cornerstone-wado-image-loader/dist/cornerstoneWADOImageLoaderWebWorker.js',
@@ -20,6 +24,26 @@ describe('config', function () {
     };
 
     webWorkerManager.initialize(config);
+  });
+
+  it('should properly load test', function (done) {
+    const imageId = 'wadouri:http://localhost:9876/base/test/images/CT2_J2KR';
+
+    console.time(name);
+
+    let loadObject;
+
+    try {
+      loadObject = wadouri.loadImage(imageId);
+    } catch (error) {
+      done(error);
+    }
+
+    loadObject.promise.then((image) => {
+      console.timeEnd(name);
+      expect(image).to.be.an('object');
+      done();
+    }, done);
   });
 });
 

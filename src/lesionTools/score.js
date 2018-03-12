@@ -1,5 +1,5 @@
 import external from '../externalModules.js';
-import { getConfiguration, getLastElement } from './threshold.js';
+import threshold from './threshold.js';
 import { TYPED_ARRAY, TOOL_TYPE } from './constants.js';
 
 const { getToolState } = external.cornerstoneTools;
@@ -66,10 +66,11 @@ export function computeScore (metaData, voxels) {
   const densityFactor = getDensityFactor(metaData.maxHU);
   const volume = voxels.length * voxelSizeScaled;
 
-  const { KVPToMultiplier } = getConfiguration();
+  const { KVPToMultiplier } = threshold.getConfiguration();
   const KVPMultiplier = KVPToMultiplier[metaData.KVP];
   const cascore = volume * densityFactor * KVPMultiplier;
 
+ /*
   console.log(`modeOverlapFactor: ${metaData.modeOverlapFactor}`);
   console.log(`voxels.length: ${voxels.length}`);
   console.log(`voxelSizeScaled: ${voxelSizeScaled}`);
@@ -77,7 +78,7 @@ export function computeScore (metaData, voxels) {
   console.log(`Max HU: ${metaData.maxHU}`);
   console.log(`densityFactor: ${densityFactor}`);
   console.log(`KVPMultiplier: ${KVPMultiplier}`);
-  console.log(`CAscore: ${cascore}`);
+  console.log(`CAscore: ${cascore}`); */
 
   // If modeOverlapFactor factor is undefined it is because there is only one slice in the series.
   // In this case obviously modeOverlapFactor is meaningless and should not be multiplied with cascore.
@@ -171,9 +172,8 @@ function bfs (x, y, view, visitedVoxels, label, image) {
  * Calculate CaScore per label per slice per lesion
  *
  */
-export function score () {
-  const element = getLastElement();
-  const { regionColorsRGB } = getConfiguration();
+export function score (element) {
+  const { regionColorsRGB } = threshold.getConfiguration();
 
   const regionsToolData = getToolState(element, TOOL_TYPE);
   const stackToolData = getToolState(element, 'stack');

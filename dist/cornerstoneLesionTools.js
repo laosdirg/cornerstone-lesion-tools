@@ -84,21 +84,20 @@ return /******/ (function(modules) { // webpackBootstrap
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-var cornerstone = window.cornerstone;
 var cornerstoneTools = window.cornerstoneTools;
 
 exports.default = {
-  set cornerstone(cst) {
-    cornerstone = cst;
-  },
-  get cornerstone() {
-    return cornerstone;
-  },
   set cornerstoneTools(cst) {
     cornerstoneTools = cst;
   },
   get cornerstoneTools() {
     return cornerstoneTools;
+  },
+  get cornerstone() {
+    return cornerstoneTools.external.cornerstone;
+  },
+  get cornerstoneMath() {
+    return cornerstoneTools.external.cornerstoneMath;
   }
 };
 
@@ -747,11 +746,6 @@ function updateRegions(element) {
   var slice = stackData.data[0].currentImageIdIndex;
   var numSlices = stackData.data[0].imageIds.length;
   var regions = thresholdingData.data[0];
-  var points = options.points.map(function (_ref) {
-    var x = _ref.x,
-        y = _ref.y;
-    return [x, y];
-  });
 
   // Extract region data
   var buffer = regions.buffer;
@@ -782,7 +776,7 @@ function updateRegions(element) {
         } else {
           snapBool = true;
         }
-        if (snapBool && (0, _pointInsidePolygon2.default)([x, y], points)) {
+        if (snapBool && (0, _pointInsidePolygon2.default)({ x: x, y: y }, options.points)) {
           view[index] = toolRegionValue;
         }
       }
@@ -898,26 +892,23 @@ exports.default = draw;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
 exports.default = pointInsidePolygon;
 // Determine if a point is inside a polygon
-function pointInsidePolygon(point, vs) {
-  var _point = _slicedToArray(point, 2),
-      x = _point[0],
-      y = _point[1];
+function pointInsidePolygon(point, polygon) {
+  var x = point.x,
+      y = point.y;
 
+  var n = polygon.length;
   var inside = false;
 
-  for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
-    var _vs$i = _slicedToArray(vs[i], 2),
-        xi = _vs$i[0],
-        yi = _vs$i[1];
+  for (var i = 0, j = n - 1; i < n; j = i++) {
+    var _polygon$i = polygon[i],
+        xi = _polygon$i.x,
+        yi = _polygon$i.y;
+    var _polygon$j = polygon[j],
+        xj = _polygon$j.x,
+        yj = _polygon$j.y;
 
-    var _vs$j = _slicedToArray(vs[j], 2),
-        xj = _vs$j[0],
-        yj = _vs$j[1];
 
     var intersect = yi > y !== yj > y && x < (xj - xi) * (y - yi) / (yj - yi) + xi;
 
@@ -953,6 +944,8 @@ var _externalModules = __webpack_require__(0);
 var _externalModules2 = _interopRequireDefault(_externalModules);
 
 var _threshold = __webpack_require__(1);
+
+var _threshold2 = _interopRequireDefault(_threshold);
 
 var _constants = __webpack_require__(2);
 
@@ -1022,20 +1015,21 @@ function computeScore(metaData, voxels) {
   var densityFactor = getDensityFactor(metaData.maxHU);
   var volume = voxels.length * voxelSizeScaled;
 
-  var _getConfiguration = (0, _threshold.getConfiguration)(),
-      KVPToMultiplier = _getConfiguration.KVPToMultiplier;
+  var _threshold$getConfigu = _threshold2.default.getConfiguration(),
+      KVPToMultiplier = _threshold$getConfigu.KVPToMultiplier;
 
   var KVPMultiplier = KVPToMultiplier[metaData.KVP];
   var cascore = volume * densityFactor * KVPMultiplier;
 
-  console.log('modeOverlapFactor: ' + metaData.modeOverlapFactor);
-  console.log('voxels.length: ' + voxels.length);
-  console.log('voxelSizeScaled: ' + voxelSizeScaled);
-  console.log('Volume: ' + volume);
-  console.log('Max HU: ' + metaData.maxHU);
-  console.log('densityFactor: ' + densityFactor);
-  console.log('KVPMultiplier: ' + KVPMultiplier);
-  console.log('CAscore: ' + cascore);
+  /*
+   console.log(`modeOverlapFactor: ${metaData.modeOverlapFactor}`);
+   console.log(`voxels.length: ${voxels.length}`);
+   console.log(`voxelSizeScaled: ${voxelSizeScaled}`);
+   console.log(`Volume: ${volume}`);
+   console.log(`Max HU: ${metaData.maxHU}`);
+   console.log(`densityFactor: ${densityFactor}`);
+   console.log(`KVPMultiplier: ${KVPMultiplier}`);
+   console.log(`CAscore: ${cascore}`); */
 
   // If modeOverlapFactor factor is undefined it is because there is only one slice in the series.
   // In this case obviously modeOverlapFactor is meaningless and should not be multiplied with cascore.
@@ -1135,11 +1129,9 @@ function bfs(x, y, view, visitedVoxels, label, image) {
  * Calculate CaScore per label per slice per lesion
  *
  */
-function score() {
-  var element = (0, _threshold.getLastElement)();
-
-  var _getConfiguration2 = (0, _threshold.getConfiguration)(),
-      regionColorsRGB = _getConfiguration2.regionColorsRGB;
+function score(element) {
+  var _threshold$getConfigu2 = _threshold2.default.getConfiguration(),
+      regionColorsRGB = _threshold$getConfigu2.regionColorsRGB;
 
   var regionsToolData = getToolState(element, _constants.TOOL_TYPE);
   var stackToolData = getToolState(element, 'stack');

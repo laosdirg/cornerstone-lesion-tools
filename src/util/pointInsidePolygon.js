@@ -1,11 +1,12 @@
 // Determine if a point is inside a polygon
-export default function pointInsidePolygon (point, vs) {
-  const [x, y] = point;
+export default function pointInsidePolygon (point, polygon) {
+  const { x, y } = point;
+  const n = polygon.length;
   let inside = false;
 
-  for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
-    const [xi, yi] = vs[i];
-    const [xj, yj] = vs[j];
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const { x: xi, y: yi } = polygon[i];
+    const { x: xj, y: yj } = polygon[j];
 
     const intersect = ((yi > y) !== (yj > y)) &&
       (x < (xj - xi) * (y - yi) / (yj - yi) + xi);

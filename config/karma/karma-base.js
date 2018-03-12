@@ -22,8 +22,15 @@ module.exports = {
   files: [
     'node_modules/cornerstone-core/dist/cornerstone.js',
     'node_modules/cornerstone-math/dist/cornerstoneMath.js',
-    'node_modules/hammerjs/hammer.js',
-    'test/**/*_test.js'
+    'node_modules/cornerstone-tools/dist/cornerstoneTools.js',
+    'node_modules/promise-polyfill/dist/promise.min.js',
+    'node_modules/dicom-parser/dist/dicomParser.js',
+    'node_modules/cornerstone-wado-image-loader/dist/cornerstoneWADOImageLoaderCodecs.js',
+    'node_modules/cornerstone-wado-image-loader/dist/cornerstoneWADOImageLoader.js',
+    'node_modules/cornerstone-wado-image-loader/dist/cornerstoneWADOImageLoaderWebWorker.js',
+    'test/*_test.js',
+    'test/**/*_test.js',
+    {pattern: 'test/images/**', watched: false, included: false, served: true, nocache: false}
   ],
 
   plugins: [

@@ -31,6 +31,12 @@ module.exports = {
       commonjs2: "cornerstone-tools",
       amd: "cornerstone-tools",
       root: 'cornerstoneTools'
+    },
+    'cornerstone-wado-image-loader': {
+      commonjs: "cornerstone-wado-image-loader",
+      commonjs2: "cornerstone-wado-image-loader",
+      amd: "cornerstone-wado-image-loader",
+      root: 'cornerstoneWADOImageLoader'
     }
   },
   module: {
