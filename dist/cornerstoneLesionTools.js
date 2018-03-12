@@ -111,21 +111,10 @@ exports.default = {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-
-var _externalModules = __webpack_require__(0);
-
-var _externalModules2 = _interopRequireDefault(_externalModules);
-
-var _constants = __webpack_require__(2);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var _external$cornerstone = _externalModules2.default.cornerstoneTools,
-    addToolState = _external$cornerstone.addToolState,
-    getToolState = _external$cornerstone.getToolState;
-
-
+exports.getConfiguration = getConfiguration;
+exports.setConfiguration = setConfiguration;
 var configuration = {
+  snap: false, // Snap to thresholded region or not
   historySize: 4,
   layersAbove: 1,
   layersBelow: 1,
@@ -150,118 +139,14 @@ var configuration = {
 
 configuration.calciumThresholdHuParsed = parseInt(configuration.calciumThresholdHu, 10);
 
-/**
- * Perform the thresholding on a stack
- */
-function performThresholding(imageIds) {
-  var width = void 0,
-      height = void 0,
-      view = void 0,
-      buffer = void 0;
-
-  // Thresholding promises
-  return Promise.all(imageIds.map(function (imageId, imageIdIndex) {
-    return _externalModules2.default.cornerstone.loadImage(imageId).then(function (image) {
-      if (!buffer) {
-        // Initialize variables on first loaded image
-        width = image.width;
-        height = image.height;
-
-        var length = width * height * imageIds.length;
-
-        buffer = new ArrayBuffer(length);
-        view = new _constants.TYPED_ARRAY(buffer);
-      }
-
-      var intercept = image.intercept,
-          slope = image.slope;
-
-      var pixelData = image.getPixelData();
-      var sliceSize = width * height;
-
-      for (var i = 0; i < sliceSize; i++) {
-        var value = pixelData[i];
-        // Calculate hu-value
-        var hu = value * slope + intercept;
-        // Check against threshold
-        var label = hu >= configuration.calciumThresholdHu ? 1 : 0;
-        // Calculate offset within view into ArrayBufer
-        var offset = imageIdIndex * sliceSize + i;
-
-        // Finally, assign label
-        view[offset] = label;
-      }
-    });
-  }
-  // When all promises resolve, return the buffer and its dimensions
-  )).then(function () {
-    return {
-      buffer: buffer,
-      width: width,
-      height: height
-    };
-  });
-}
-
-function ensureToolData(element) {
-  var regionsData = void 0;
-
-  var regionsToolData = getToolState(element, _constants.TOOL_TYPE);
-
-  if (!regionsToolData || !regionsToolData.data || !regionsToolData.data.length) {
-    regionsData = {
-      enabled: 1,
-      buffer: null,
-      width: null,
-      height: null,
-      history: [],
-      drawBuffer: null
-    };
-    addToolState(element, _constants.TOOL_TYPE, regionsData);
-  } else {
-    regionsData = regionsToolData.data[0];
-  }
-
-  return regionsData;
-}
-
-function threshold(element) {
-  var stackToolData = getToolState(element, 'stack');
-  console.log("got stack", stackToolData);
-  if (!stackToolData || !stackToolData.data || !stackToolData.data.length) {
-    return;
-  }
-
-  var stackData = stackToolData.data[0];
-  var regionsData = ensureToolData(element);
-
-  console.log("ABOUT TO PERFORM");
-
-  performThresholding(stackData.imageIds).then(function (regions) {
-    // Add threshold data to tool state
-    regionsData.buffer = regions.buffer;
-    regionsData.width = regions.width;
-    regionsData.height = regions.height;
-
-    // Update the element to apply the viewport and tool changes
-    _externalModules2.default.cornerstone.updateImage(element);
-  });
-}
-
 function getConfiguration() {
   return configuration;
 }
 
 function setConfiguration(config) {
+  console.log("c", config);
   configuration = config;
 }
-
-// Module/private exports
-exports.default = {
-  threshold: threshold,
-  getConfiguration: getConfiguration,
-  setConfiguration: setConfiguration
-};
 
 /***/ }),
 /* 2 */
@@ -294,16 +179,16 @@ var _externalModules = __webpack_require__(0);
 
 var _externalModules2 = _interopRequireDefault(_externalModules);
 
+var _configuration = __webpack_require__(1);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var getToolState = _externalModules2.default.cornerstoneTools.getToolState;
 
-
-var configuration = {};
-
 /**
  * Store current state to history
  */
+
 function createUndoStep(element) {
   var thresholdingData = getToolState(element, 'regions');
 
@@ -314,7 +199,7 @@ function createUndoStep(element) {
   // Put at end of history
   state.history.push(current);
   // Remove oldest if too much history
-  if (state.history.length > configuration.historySize) {
+  if (state.history.length > (0, _configuration.getConfiguration)().historySize) {
     state.history.shift();
   }
 }
@@ -357,6 +242,21 @@ Object.defineProperty(exports, 'external', {
   }
 });
 
+var _configuration = __webpack_require__(1);
+
+Object.defineProperty(exports, 'getConfiguration', {
+  enumerable: true,
+  get: function get() {
+    return _configuration.getConfiguration;
+  }
+});
+Object.defineProperty(exports, 'setConfiguration', {
+  enumerable: true,
+  get: function get() {
+    return _configuration.setConfiguration;
+  }
+});
+
 var _display = __webpack_require__(5);
 
 Object.defineProperty(exports, 'display', {
@@ -366,7 +266,7 @@ Object.defineProperty(exports, 'display', {
   }
 });
 
-var _threshold = __webpack_require__(1);
+var _threshold = __webpack_require__(6);
 
 Object.defineProperty(exports, 'threshold', {
   enumerable: true,
@@ -375,7 +275,7 @@ Object.defineProperty(exports, 'threshold', {
   }
 });
 
-var _grow = __webpack_require__(6);
+var _grow = __webpack_require__(7);
 
 Object.defineProperty(exports, 'grow', {
   enumerable: true,
@@ -384,7 +284,7 @@ Object.defineProperty(exports, 'grow', {
   }
 });
 
-var _draw = __webpack_require__(7);
+var _draw = __webpack_require__(8);
 
 Object.defineProperty(exports, 'draw', {
   enumerable: true,
@@ -393,7 +293,7 @@ Object.defineProperty(exports, 'draw', {
   }
 });
 
-var _score = __webpack_require__(9);
+var _score = __webpack_require__(10);
 
 Object.defineProperty(exports, 'score', {
   enumerable: true,
@@ -436,23 +336,22 @@ var _externalModules2 = _interopRequireDefault(_externalModules);
 
 var _constants = __webpack_require__(2);
 
+var _configuration = __webpack_require__(1);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var _external$cornerstone = _externalModules2.default.cornerstoneTools,
     displayTool = _external$cornerstone.displayTool,
     getToolState = _external$cornerstone.getToolState;
 
-
-var configuration = {
-  drawAlpha: 1,
-  regionColorsRGB: [[255, 0, 255], [246, 193, 91], [237, 148, 69], [230, 103, 49], [184, 74, 41], [106, 58, 45]]
-};
-
 /**
  * Draw regions on image
  */
+
 function onImageRendered(_ref) {
   var detail = _ref.detail;
+
+  var configuration = (0, _configuration.getConfiguration)();
   var canvasContext = detail.canvasContext,
       element = detail.element,
       enabledElement = detail.enabledElement,
@@ -525,12 +424,136 @@ function onImageRendered(_ref) {
 
 var lesionIndicator = displayTool(onImageRendered);
 
-lesionIndicator.setConfiguration(configuration);
-
 exports.default = lesionIndicator;
 
 /***/ }),
 /* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _externalModules = __webpack_require__(0);
+
+var _externalModules2 = _interopRequireDefault(_externalModules);
+
+var _constants = __webpack_require__(2);
+
+var _configuration = __webpack_require__(1);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var _external$cornerstone = _externalModules2.default.cornerstoneTools,
+    addToolState = _external$cornerstone.addToolState,
+    getToolState = _external$cornerstone.getToolState;
+
+/**
+ * Perform the thresholding on a stack
+ */
+
+function performThresholding(imageIds) {
+  var width = void 0,
+      height = void 0,
+      view = void 0,
+      buffer = void 0;
+
+  var configuration = (0, _configuration.getConfiguration)();
+
+  // Thresholding promises
+  return Promise.all(imageIds.map(function (imageId, imageIdIndex) {
+    return _externalModules2.default.cornerstone.loadImage(imageId).then(function (image) {
+      if (!buffer) {
+        // Initialize variables on first loaded image
+        width = image.width;
+        height = image.height;
+
+        var length = width * height * imageIds.length;
+
+        buffer = new ArrayBuffer(length);
+        view = new _constants.TYPED_ARRAY(buffer);
+      }
+
+      var intercept = image.intercept,
+          slope = image.slope;
+
+      var pixelData = image.getPixelData();
+      var sliceSize = width * height;
+
+      for (var i = 0; i < sliceSize; i++) {
+        var value = pixelData[i];
+        // Calculate hu-value
+        var hu = value * slope + intercept;
+        // Check against threshold
+        var label = hu >= configuration.calciumThresholdHu ? 1 : 0;
+        // Calculate offset within view into ArrayBufer
+        var offset = imageIdIndex * sliceSize + i;
+
+        // Finally, assign label
+        view[offset] = label;
+      }
+    });
+  }
+  // When all promises resolve, return the buffer and its dimensions
+  )).then(function () {
+    return {
+      buffer: buffer,
+      width: width,
+      height: height
+    };
+  });
+}
+
+function ensureToolData(element) {
+  var regionsData = void 0;
+
+  var regionsToolData = getToolState(element, _constants.TOOL_TYPE);
+
+  if (!regionsToolData || !regionsToolData.data || !regionsToolData.data.length) {
+    regionsData = {
+      enabled: 1,
+      buffer: null,
+      width: null,
+      height: null,
+      history: [],
+      drawBuffer: null
+    };
+    addToolState(element, _constants.TOOL_TYPE, regionsData);
+  } else {
+    regionsData = regionsToolData.data[0];
+  }
+
+  return regionsData;
+}
+
+function threshold(element) {
+  var stackToolData = getToolState(element, 'stack');
+
+  if (!stackToolData || !stackToolData.data || !stackToolData.data.length) {
+    return;
+  }
+
+  var stackData = stackToolData.data[0];
+  var regionsData = ensureToolData(element);
+
+  performThresholding(stackData.imageIds).then(function (regions) {
+    // Add threshold data to tool state
+    regionsData.buffer = regions.buffer;
+    regionsData.width = regions.width;
+    regionsData.height = regions.height;
+
+    // Update the element to apply the viewport and tool changes
+    _externalModules2.default.cornerstone.updateImage(element);
+  });
+}
+// Module/private exports
+exports.default = threshold;
+
+/***/ }),
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -548,9 +571,7 @@ var _externalModules2 = _interopRequireDefault(_externalModules);
 
 var _history = __webpack_require__(3);
 
-var _threshold = __webpack_require__(1);
-
-var _threshold2 = _interopRequireDefault(_threshold);
+var _configuration = __webpack_require__(1);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -582,11 +603,11 @@ function linearNeighbours(width, height, highSlice, lowSlice, index) {
 }
 
 function regionGrowing(regions, point) {
-  var _threshold$getConfigu = _threshold2.default.getConfiguration(),
-      growIterationsPerChunk = _threshold$getConfigu.growIterationsPerChunk,
-      toolRegionValue = _threshold$getConfigu.toolRegionValue,
-      layersAbove = _threshold$getConfigu.layersAbove,
-      layersBelow = _threshold$getConfigu.layersBelow;
+  var _getConfiguration = (0, _configuration.getConfiguration)(),
+      growIterationsPerChunk = _getConfiguration.growIterationsPerChunk,
+      toolRegionValue = _getConfiguration.toolRegionValue,
+      layersAbove = _getConfiguration.layersAbove,
+      layersBelow = _getConfiguration.layersBelow;
 
   var width = regions.width,
       height = regions.height,
@@ -682,12 +703,10 @@ function mouseDownCallback(e) {
   }
 }
 
-var grow = simpleMouseButtonTool(mouseDownCallback, toolType);
-
-exports.default = grow;
+exports.default = simpleMouseButtonTool(mouseDownCallback, toolType);
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -701,19 +720,18 @@ var _externalModules = __webpack_require__(0);
 
 var _externalModules2 = _interopRequireDefault(_externalModules);
 
-var _history = __webpack_require__(3);
-
-var _pointInsidePolygon = __webpack_require__(8);
+var _pointInsidePolygon = __webpack_require__(9);
 
 var _pointInsidePolygon2 = _interopRequireDefault(_pointInsidePolygon);
 
-var _threshold = __webpack_require__(1);
+var _configuration = __webpack_require__(1);
 
-var _threshold2 = _interopRequireDefault(_threshold);
+var _history = __webpack_require__(3);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var _external$cornerstone = _externalModules2.default.cornerstoneTools,
+    toolColors = _external$cornerstone.toolColors,
     getToolState = _external$cornerstone.getToolState,
     getToolOptions = _external$cornerstone.getToolOptions,
     setToolOptions = _external$cornerstone.setToolOptions,
@@ -723,17 +741,12 @@ var _external$cornerstone = _externalModules2.default.cornerstoneTools,
 
 var toolType = 'draw';
 
-var configuration = {
-  snap: false, // Snap to thresholded region or not
-  fillStyle: 'rgba(255,255,255,.2)',
-  strokeStyle: 'white'
-};
-
 function updateRegions(element) {
-  var _threshold$getConfigu = _threshold2.default.getConfiguration(),
-      toolRegionValue = _threshold$getConfigu.toolRegionValue,
-      layersAbove = _threshold$getConfigu.layersAbove,
-      layersBelow = _threshold$getConfigu.layersBelow;
+  var _getConfiguration = (0, _configuration.getConfiguration)(),
+      snap = _getConfiguration.snap,
+      toolRegionValue = _getConfiguration.toolRegionValue,
+      layersAbove = _getConfiguration.layersAbove,
+      layersBelow = _getConfiguration.layersBelow;
 
   (0, _history.createUndoStep)(element);
 
@@ -762,7 +775,6 @@ function updateRegions(element) {
   var view = new Uint8Array(buffer, sliceOffset);
 
   // Mark points inside
-  console.log(numSlices);
   for (var dslice = 0; dslice <= endSlice - startSlice; dslice += 1) {
     for (var x = 0; x < width; x += 1) {
       for (var y = 0; y < height; y += 1) {
@@ -771,12 +783,17 @@ function updateRegions(element) {
 
         var snapBool = void 0;
 
-        if (configuration.snap) {
+        if (snap) {
           snapBool = prevValue > 0;
         } else {
           snapBool = true;
         }
-        if (snapBool && (0, _pointInsidePolygon2.default)({ x: x, y: y }, options.points)) {
+        var point = {
+          x: x,
+          y: y
+        };
+
+        if (snapBool && (0, _pointInsidePolygon2.default)(point, options.points)) {
           view[index] = toolRegionValue;
         }
       }
@@ -791,12 +808,7 @@ function imageRenderedCallback(e) {
       enabledElement = _e$detail.enabledElement,
       element = _e$detail.element;
 
-  var _draw$getConfiguratio = draw.getConfiguration(),
-      fillStyle = _draw$getConfiguratio.fillStyle,
-      strokeStyle = _draw$getConfiguratio.strokeStyle;
-
   // Points
-
 
   var options = getToolOptions(toolType, element);
   var points = options.points;
@@ -808,8 +820,8 @@ function imageRenderedCallback(e) {
   // Set the canvas context to the image coordinate system
   _externalModules2.default.cornerstone.setToPixelCoordinateSystem(enabledElement, canvasContext);
 
-  canvasContext.fillStyle = fillStyle;
-  canvasContext.strokeStyle = strokeStyle;
+  canvasContext.fillStyle = toolColors.getFillColor();
+  canvasContext.strokeStyle = toolColors.getActiveColor();
   canvasContext.beginPath();
   canvasContext.moveTo(points[0].x, points[0].y);
   points.slice(1).forEach(function (point) {
@@ -871,19 +883,10 @@ function mouseDownCallback(e) {
   }
 }
 
-var draw = simpleMouseButtonTool(mouseDownCallback, toolType);
-
-draw.getConfiguration = function () {
-  return configuration;
-};
-draw.setConfiguration = function (config) {
-  configuration = config;
-};
-
-exports.default = draw;
+exports.default = simpleMouseButtonTool(mouseDownCallback, toolType);
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -921,7 +924,7 @@ function pointInsidePolygon(point, polygon) {
 }
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -943,9 +946,7 @@ var _externalModules = __webpack_require__(0);
 
 var _externalModules2 = _interopRequireDefault(_externalModules);
 
-var _threshold = __webpack_require__(1);
-
-var _threshold2 = _interopRequireDefault(_threshold);
+var _configuration = __webpack_require__(1);
 
 var _constants = __webpack_require__(2);
 
@@ -1015,8 +1016,8 @@ function computeScore(metaData, voxels) {
   var densityFactor = getDensityFactor(metaData.maxHU);
   var volume = voxels.length * voxelSizeScaled;
 
-  var _threshold$getConfigu = _threshold2.default.getConfiguration(),
-      KVPToMultiplier = _threshold$getConfigu.KVPToMultiplier;
+  var _getConfiguration = (0, _configuration.getConfiguration)(),
+      KVPToMultiplier = _getConfiguration.KVPToMultiplier;
 
   var KVPMultiplier = KVPToMultiplier[metaData.KVP];
   var cascore = volume * densityFactor * KVPMultiplier;
@@ -1130,8 +1131,8 @@ function bfs(x, y, view, visitedVoxels, label, image) {
  *
  */
 function score(element) {
-  var _threshold$getConfigu2 = _threshold2.default.getConfiguration(),
-      regionColorsRGB = _threshold$getConfigu2.regionColorsRGB;
+  var _getConfiguration2 = (0, _configuration.getConfiguration)(),
+      regionColorsRGB = _getConfiguration2.regionColorsRGB;
 
   var regionsToolData = getToolState(element, _constants.TOOL_TYPE);
   var stackToolData = getToolState(element, 'stack');

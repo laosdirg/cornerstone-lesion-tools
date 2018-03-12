@@ -1,4 +1,6 @@
 export { default as external } from './externalModules.js';
+export { getConfiguration, setConfiguration } from './configuration.js';
+
 export { default as display } from './lesionTools/display.js';
 export { default as threshold } from './lesionTools/threshold.js';
 export { default as grow } from './lesionTools/grow.js';

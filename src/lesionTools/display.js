@@ -1,24 +1,14 @@
 import external from '../externalModules.js';
-import { TYPED_ARRAY } from './constants.js';
+import { TYPED_ARRAY } from '../constants.js';
+import { getConfiguration } from '../configuration.js';
 
 const { displayTool, getToolState } = external.cornerstoneTools;
-
-const configuration = {
-  drawAlpha: 1,
-  regionColorsRGB: [
-    [255, 0, 255],
-    [246, 193, 91],
-    [237, 148, 69],
-    [230, 103, 49],
-    [184, 74, 41],
-    [106, 58, 45]
-  ]
-};
 
 /**
  * Draw regions on image
  */
 function onImageRendered ({ detail }) {
+  const configuration = getConfiguration();
   const { canvasContext, element, enabledElement, image } = detail;
   const { width, height } = image;
 
@@ -82,7 +72,5 @@ function onImageRendered ({ detail }) {
 }
 
 const lesionIndicator = displayTool(onImageRendered);
-
-lesionIndicator.setConfiguration(configuration);
 
 export default lesionIndicator;

@@ -1,8 +1,7 @@
 import external from '../externalModules.js';
+import { getConfiguration } from '../configuration.js';
 
 const { getToolState } = external.cornerstoneTools;
-
-const configuration = {};
 
 /**
  * Store current state to history
@@ -17,7 +16,7 @@ export function createUndoStep (element) {
   // Put at end of history
   state.history.push(current);
   // Remove oldest if too much history
-  if (state.history.length > configuration.historySize) {
+  if (state.history.length > getConfiguration().historySize) {
     state.history.shift();
   }
 }

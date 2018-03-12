@@ -1,6 +1,6 @@
 import external from '../externalModules.js';
 import { createUndoStep } from './history.js';
-import threshold from './threshold.js';
+import { getConfiguration } from '../configuration.js';
 
 const {
   getToolState,
@@ -35,7 +35,7 @@ function linearNeighbours (width, height, highSlice, lowSlice, index) {
 }
 
 function regionGrowing (regions, point) {
-  const { growIterationsPerChunk, toolRegionValue, layersAbove, layersBelow } = threshold.getConfiguration();
+  const { growIterationsPerChunk, toolRegionValue, layersAbove, layersBelow } = getConfiguration();
   const { width, height, buffer } = regions;
   const [x, y, slice] = point;
   const highSlice = slice + layersBelow;
@@ -109,6 +109,4 @@ function mouseDownCallback (e) {
   }
 }
 
-const grow = simpleMouseButtonTool(mouseDownCallback, toolType);
-
-export default grow;
+export default simpleMouseButtonTool(mouseDownCallback, toolType);

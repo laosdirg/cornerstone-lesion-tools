@@ -1,20 +1,15 @@
 import external from '../externalModules.js';
-import { createUndoStep } from './history.js';
 import pointInsidePolygon from '../util/pointInsidePolygon.js';
-import threshold from './threshold.js';
+import { getConfiguration } from '../configuration.js';
 
-const { getToolState, getToolOptions, setToolOptions, simpleMouseButtonTool, isMouseButtonEnabled } = external.cornerstoneTools;
+import { createUndoStep } from './history.js';
+
+const { toolColors, getToolState, getToolOptions, setToolOptions, simpleMouseButtonTool, isMouseButtonEnabled } = external.cornerstoneTools;
 
 const toolType = 'draw';
 
-let configuration = {
-  snap: false, // Snap to thresholded region or not
-  fillStyle: 'rgba(255,255,255,.2)',
-  strokeStyle: 'white'
-};
-
 function updateRegions (element) {
-  const { toolRegionValue, layersAbove, layersBelow } = threshold.getConfiguration();
+  const { snap, toolRegionValue, layersAbove, layersBelow } = getConfiguration();
 
   createUndoStep(element);
 
@@ -43,7 +38,6 @@ function updateRegions (element) {
   const view = new Uint8Array(buffer, sliceOffset);
 
   // Mark points inside
-  console.log(numSlices);
   for (let dslice = 0; dslice <= endSlice - startSlice; dslice += 1) {
     for (let x = 0; x < width; x += 1) {
       for (let y = 0; y < height; y += 1) {
@@ -52,12 +46,17 @@ function updateRegions (element) {
 
         let snapBool;
 
-        if (configuration.snap) {
+        if (snap) {
           snapBool = prevValue > 0;
         } else {
           snapBool = true;
         }
-        if (snapBool && pointInsidePolygon({ x, y }, options.points)) {
+        const point = {
+          x,
+          y
+        };
+
+        if (snapBool && pointInsidePolygon(point, options.points)) {
           view[index] = toolRegionValue;
         }
       }
@@ -68,7 +67,6 @@ function updateRegions (element) {
 // Draw regions on the canvas
 function imageRenderedCallback (e) {
   const { canvasContext, enabledElement, element } = e.detail;
-  const { fillStyle, strokeStyle } = draw.getConfiguration();
 
   // Points
   const options = getToolOptions(toolType, element);
@@ -81,8 +79,8 @@ function imageRenderedCallback (e) {
   // Set the canvas context to the image coordinate system
   external.cornerstone.setToPixelCoordinateSystem(enabledElement, canvasContext);
 
-  canvasContext.fillStyle = fillStyle;
-  canvasContext.strokeStyle = strokeStyle;
+  canvasContext.fillStyle = toolColors.getFillColor();
+  canvasContext.strokeStyle = toolColors.getActiveColor();
   canvasContext.beginPath();
   canvasContext.moveTo(points[0].x, points[0].y);
   points.slice(1).forEach(function (point) {
@@ -137,11 +135,4 @@ function mouseDownCallback (e) {
   }
 }
 
-const draw = simpleMouseButtonTool(mouseDownCallback, toolType);
-
-draw.getConfiguration = () => configuration;
-draw.setConfiguration = (config) => {
-  configuration = config;
-};
-
-export default draw;
+export default simpleMouseButtonTool(mouseDownCallback, toolType);

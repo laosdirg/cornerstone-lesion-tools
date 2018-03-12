@@ -1,6 +1,6 @@
 import external from '../externalModules.js';
-import threshold from './threshold.js';
-import { TYPED_ARRAY, TOOL_TYPE } from './constants.js';
+import { getConfiguration } from '../configuration.js';
+import { TYPED_ARRAY, TOOL_TYPE } from '../constants.js';
 
 const { getToolState } = external.cornerstoneTools;
 
@@ -66,7 +66,7 @@ export function computeScore (metaData, voxels) {
   const densityFactor = getDensityFactor(metaData.maxHU);
   const volume = voxels.length * voxelSizeScaled;
 
-  const { KVPToMultiplier } = threshold.getConfiguration();
+  const { KVPToMultiplier } = getConfiguration();
   const KVPMultiplier = KVPToMultiplier[metaData.KVP];
   const cascore = volume * densityFactor * KVPMultiplier;
 
@@ -173,7 +173,7 @@ function bfs (x, y, view, visitedVoxels, label, image) {
  *
  */
 export function score (element) {
-  const { regionColorsRGB } = threshold.getConfiguration();
+  const { regionColorsRGB } = getConfiguration();
 
   const regionsToolData = getToolState(element, TOOL_TYPE);
   const stackToolData = getToolState(element, 'stack');

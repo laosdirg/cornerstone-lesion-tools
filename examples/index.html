@@ -130,7 +130,6 @@
             cornerstoneLesionTools.draw.activate(element1, 4);
             cornerstoneLesionTools.grow.activate(element1, 1);
             cornerstoneTools.stackScrollWheel.activate(element1);
-            // cornerstoneTools.mpr.performMPR(element1);
 
             cornerstoneTools.scrollIndicator.enable(element1);
         });
@@ -144,7 +143,7 @@
     })
 
     document.getElementById('calculate').addEventListener('click', function(){
-      var scores = cornerstoneLesionTools.threshold.score().then(function(scores){
+      var scores = cornerstoneLesionTools.score(element1).then(function(scores){
         console.log("YO", scores);
       });
     })
@@ -166,17 +165,17 @@
     })
 
     document.getElementById('thresholdVal').addEventListener('blur', function(event) {
-      var config = cornerstoneLesionTools.threshold.getConfiguration();
+      var config = cornerstoneLesionTools.getConfiguration();
       config.calciumThresholdHu = parseInt(event.target.value);
-      cornerstoneLesionTools.threshold.setConfiguration(config)
-      cornerstoneLesionTools.threshold.threshold(element1);
+      cornerstoneLesionTools.setConfiguration(config)
+      cornerstoneLesionTools.threshold(element1);
     })
 
     document.getElementById('snap').addEventListener('change', function(e) {
       e.preventDefault();
-      var config = cornerstoneLesionTools.draw.getConfiguration();
+      var config = cornerstoneLesionTools.getConfiguration();
       config.snap = e.target.checked;
-      cornerstoneLesionTools.draw.setConfiguration(config);
+      cornerstoneLesionTools.setConfiguration(config);
     })
 
 
