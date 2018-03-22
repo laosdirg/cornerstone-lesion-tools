@@ -1,4 +1,4 @@
-/*! cornerstone-lesion-tools - 0.1.0 - 2018-03-12 | (c) 2017 Chris Hafey | undefined */
+/*! cornerstone-lesion-tools - 0.1.0 - 2018-03-22 | (c) 2017 Chris Hafey | undefined */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1176,12 +1176,19 @@ function score(element) {
 
       var imagePlane = _externalModules2.default.cornerstone.metaData.get('imagePlaneModule', imageId);
       var modalityLut = _externalModules2.default.cornerstone.metaData.get('modalityLutModule', imageId);
+      console.log('imagePlane', imagePlane);
+      console.log('modalityLut', modalityLut);
 
       metaData.sliceThickness = imagePlane.sliceThickness;
       metaData.pixelSpacing = imagePlane.pixelSpacing;
-      metaData.rescaleSlope = modalityLut.rescaleSlope;
-      metaData.rescaleIntercept = modalityLut.rescaleIntercept;
-      metaData.rescaleType = modalityLut.rescaleType;
+      if (modalityLut) {
+        metaData.rescaleSlope = modalityLut.rescaleSlope;
+        metaData.rescaleIntercept = modalityLut.rescaleIntercept;
+      } else {
+        metaData.slope = image.slope;
+        metaData.intercept = image.intercept;
+        console.warn('No modalityLutModule found, score might be wrong');
+      }
 
       var imagePositionPatient = imagePlane.imagePositionPatient;
       var imageOrientationTmp = imagePlane.imageOrientationPatient;
@@ -1190,7 +1197,7 @@ function score(element) {
       var dataSet = image.data;
       metaData.KVP = dataSet.floatString('x00180060');
       /* What is this?
-       if (metaData.rescaleType !== 'HU') {
+       if (modalityLut.rescaleType !== 'HU') {
          console.warn(`Modality LUT does not convert to Hounsfield units but to ${metaData.rescaleType}. Agatston score is not defined for this unit type.`);
           return;
       }

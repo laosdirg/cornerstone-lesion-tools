@@ -195,12 +195,19 @@ export function score (element) {
 
       const imagePlane = external.cornerstone.metaData.get('imagePlaneModule', imageId);
       const modalityLut = external.cornerstone.metaData.get('modalityLutModule', imageId);
+      console.log('imagePlane', imagePlane);
+      console.log('modalityLut', modalityLut);
 
       metaData.sliceThickness = imagePlane.sliceThickness;
       metaData.pixelSpacing = imagePlane.pixelSpacing;
-      metaData.rescaleSlope = modalityLut.rescaleSlope;
-      metaData.rescaleIntercept = modalityLut.rescaleIntercept;
-      metaData.rescaleType = modalityLut.rescaleType;
+      if (modalityLut) {
+        metaData.rescaleSlope = modalityLut.rescaleSlope;
+        metaData.rescaleIntercept = modalityLut.rescaleIntercept;
+      } else {
+        metaData.slope = image.slope;
+        metaData.intercept = image.intercept;
+        console.warn('No modalityLutModule found, score might be wrong');
+      }
 
       const imagePositionPatient = imagePlane.imagePositionPatient;
       const imageOrientationTmp = imagePlane.imageOrientationPatient;
@@ -212,7 +219,7 @@ export function score (element) {
       const dataSet = image.data;
       metaData.KVP = dataSet.floatString('x00180060');
       /* What is this?
-       if (metaData.rescaleType !== 'HU') {
+       if (modalityLut.rescaleType !== 'HU') {
          console.warn(`Modality LUT does not convert to Hounsfield units but to ${metaData.rescaleType}. Agatston score is not defined for this unit type.`);
 
          return;

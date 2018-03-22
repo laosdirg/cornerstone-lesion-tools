@@ -1,12 +1,17 @@
 import { expect } from 'chai';
+import * as cornerstone from 'cornerstone-core';
+import * as cornerstoneTools from 'cornerstone-tools';
 import { webWorkerManager, wadouri, external } from 'cornerstone-wado-image-loader';
 import { computeScore, computeVoxelSize, computeIOPProjectedDistance, computeOverlapFactor } from '../../src/lesionTools/score.js';
+import score from '../../src/lesionTools/score.js';
+import * as cornerstoneLesionTools from '../../src/index.js';
 
-describe('config', function () {
+describe('#scoring', function () {
   this.timeout(0);
 
   before(function () {
-    external.cornerstone = window.cornerstone;
+    external.cornerstone = cornerstone;
+    cornerstoneTools.external.cornerstone = cornerstone;
 
     // Initialize the web worker manager
     const config = {
@@ -26,12 +31,23 @@ describe('config', function () {
     webWorkerManager.initialize(config);
   });
 
-  it('should properly load test', function (done) {
-    const imageId = 'wadouri:http://localhost:9876/base/test/images/CT2_J2KR';
+  beforeEach(function () {
+    this.element = document.createElement('div');
+    const options = {};
 
-    console.time(name);
+    cornerstone.enable(this.element, options);
+  });
+
+  it('should properly load test', function (done) {
+    const imageId = 'wadouri:http://localhost:9876/base/test/images/CTImage.dcm';
 
     let loadObject;
+
+    const stack = {
+      currentImageIdIndex: 0,
+      imageIds: [imageId]
+    };
+
 
     try {
       loadObject = wadouri.loadImage(imageId);
@@ -42,8 +58,25 @@ describe('config', function () {
     loadObject.promise.then((image) => {
       console.timeEnd(name);
       expect(image).to.be.an('object');
+
+      cornerstone.displayImage(this.element, image);
+      cornerstoneTools.addStackStateManager(this.element, ['stack', 'regions', 'drawing']);
+      cornerstoneTools.addToolState(this.element, 'stack', stack);
+
+      cornerstoneLesionTools.threshold(this.element);
+
+      return score(this.element);
+    }).then((score) => {
+      console.log("SCORE:", score);
       done();
-    }, done);
+    }, err => {
+      console.error(err);
+      done(err);
+    });
+  });
+
+  afterEach(function () {
+    cornerstone.disable(this.element);
   });
 });
 
